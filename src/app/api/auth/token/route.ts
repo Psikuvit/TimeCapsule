@@ -90,7 +90,7 @@ async function exchangeGoogleToken(code: string, redirectUri: string): Promise<s
 }
 
 async function exchangeGitHubToken(code: string, redirectUri: string): Promise<string> {
-  const clientId = process.env.GITHUB_CLIENT_ID;
+      const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID;
   const clientSecret = process.env.GITHUB_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {

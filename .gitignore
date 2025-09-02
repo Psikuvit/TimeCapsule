@@ -16,6 +16,8 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+# Allow example files
+!.env.example
 
 # Runtime data
 pids

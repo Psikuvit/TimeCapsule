@@ -7,10 +7,9 @@ let mongoDb: Db | null = null;
 const getDatabase = async (): Promise<Db> => {
   if (mongoDb) return mongoDb;
   const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/timecapsule';
-  // Allow database name inside URI or fallback
   mongoClient = new MongoClient(uri);
   await mongoClient.connect();
-  // If URI includes db, driver selects it; else default
+
   mongoDb = mongoClient.db();
   await ensureIndexes(mongoDb);
   return mongoDb;
@@ -36,7 +35,6 @@ const ensureIndexes = async (db: Db) => {
 
 const generateId = () => new ObjectId().toString();
 
-// Types used by services (mirror previous Prisma models shape where relevant)
 export type DbUser = {
   id: string;
   email: string;

@@ -27,7 +27,11 @@ async function handleAuthComplete(req: NextRequest) {
     try {
       const decodedState = JSON.parse(decodeURIComponent(state));
       provider = decodedState.provider;
-    } catch {
+      if (!provider) {
+        throw new Error('Provider not found in state');
+      }
+    } catch (error) {
+      console.error('State parsing error:', error);
       return NextResponse.json(
         { error: 'Invalid state parameter' },
         { status: 400 }
@@ -45,7 +49,7 @@ async function handleAuthComplete(req: NextRequest) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          client_id: process.env.GITHUB_CLIENT_ID,
+          client_id: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
           client_secret: process.env.GITHUB_CLIENT_SECRET,
           code,
         }),
@@ -107,7 +111,7 @@ async function handleAuthComplete(req: NextRequest) {
         },
         body: new URLSearchParams({
           code,
-          client_id: process.env.GOOGLE_CLIENT_ID!,
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
           client_secret: process.env.GOOGLE_CLIENT_SECRET!,
           redirect_uri: process.env.GOOGLE_REDIRECT_URI!,
           grant_type: 'authorization_code',

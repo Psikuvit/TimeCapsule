@@ -62,29 +62,32 @@ export const OAUTH_PROVIDERS = {
 
 export type OAuthProvider = typeof OAUTH_PROVIDERS[keyof typeof OAUTH_PROVIDERS];
 
-// OAuth configuration
-const OAUTH_CONFIG = {
-  google: {
-    clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-    redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
-    scope: 'openid email profile',
-    authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-    tokenUrl: 'https://oauth2.googleapis.com/token',
-    userInfoUrl: 'https://www.googleapis.com/oauth2/v2/userinfo',
-  },
-  github: {
-    clientId: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
-    redirectUri: typeof window !== 'undefined' ? `${window.location.origin}/auth/callback` : '',
-    scope: 'read:user user:email',
-    authUrl: 'https://github.com/login/oauth/authorize',
-    tokenUrl: 'https://github.com/login/oauth/access_token',
-    userInfoUrl: 'https://api.github.com/user',
-  },
-};
+// OAuth configuration - will be fetched from server
+let OAUTH_CONFIG: any = null;
+
+// Function to get OAuth configuration from server
+async function getOAuthConfig() {
+  if (OAUTH_CONFIG) return OAUTH_CONFIG;
+  
+  try {
+    const response = await fetch('/api/auth/config');
+    if (response.ok) {
+      const data = await response.json();
+      OAUTH_CONFIG = data.oauthConfig;
+      return OAUTH_CONFIG;
+    } else {
+      throw new Error('Failed to fetch OAuth configuration');
+    }
+  } catch (error) {
+    console.error('Error fetching OAuth config:', error);
+    throw new Error('OAuth configuration not available');
+  }
+}
 
 // Authentication functions
 export const login = async (provider: OAuthProvider): Promise<void> => {
-  const config = OAUTH_CONFIG[provider as keyof typeof OAUTH_CONFIG];
+  const oauthConfig = await getOAuthConfig();
+  const config = oauthConfig[provider as keyof typeof oauthConfig];
   
   if (!config?.clientId) {
     throw new Error(`${provider} OAuth is not configured. Please set NEXT_PUBLIC_${provider.toUpperCase()}_CLIENT_ID environment variable.`);
@@ -92,7 +95,8 @@ export const login = async (provider: OAuthProvider): Promise<void> => {
 
   // Generate state parameter for security
   const nonce = generateRandomState();
-  const state = `${nonce}:${provider}`;
+  const stateData = { nonce, provider };
+  const state = encodeURIComponent(JSON.stringify(stateData));
   sessionStorage.setItem('oauth_state', state);
   sessionStorage.setItem('oauth_provider', provider);
 
@@ -129,7 +133,8 @@ export const handleOAuthCallback = async (code: string, state: string, incomingP
   sessionStorage.removeItem('oauth_state');
   sessionStorage.removeItem('oauth_provider');
 
-  const config = OAUTH_CONFIG[provider as keyof typeof OAUTH_CONFIG];
+  const oauthConfig = await getOAuthConfig();
+  const config = oauthConfig[provider as keyof typeof oauthConfig];
   if (!config) {
     throw new Error(`Unsupported OAuth provider: ${provider}`);
   }
@@ -148,7 +153,7 @@ export const handleOAuthCallback = async (code: string, state: string, incomingP
       },
       body: JSON.stringify({
         code,
-        provider,
+        state,
         redirectUri,
       }),
     });
@@ -321,7 +326,13 @@ export const isOAuthProviderConfigured = (provider: OAuthProvider): boolean => {
 
 const parseProviderFromState = (state: string | null): string | null => {
   if (!state) return null;
-  const idx = state.indexOf(':');
-  if (idx === -1) return null;
-  return state.slice(idx + 1);
+  try {
+    const decodedState = JSON.parse(decodeURIComponent(state));
+    return decodedState.provider || null;
+  } catch {
+    // Fallback for old format
+    const idx = state.indexOf(':');
+    if (idx === -1) return null;
+    return state.slice(idx + 1);
+  }
 };

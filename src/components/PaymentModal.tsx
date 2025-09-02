@@ -83,15 +83,32 @@ export default function PaymentModal({ isOpen, onClose, onSuccess }: PaymentModa
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
+  const [stripeConfig, setStripeConfig] = useState<any>(null);
+
+  // Fetch Stripe configuration from server
+  useEffect(() => {
+    const fetchStripeConfig = async () => {
+      try {
+        const response = await fetch('/api/stripe/config');
+        if (response.ok) {
+          const data = await response.json();
+          setStripeConfig(data);
+        }
+      } catch (error) {
+        console.error('Error fetching Stripe config:', error);
+      }
+    };
+    
+    fetchStripeConfig();
+  }, []);
 
   // Check if Stripe is properly configured
-  const isStripeConfigured = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && 
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY !== 'pk_test_placeholder';
+  const isStripeConfigured = stripeConfig?.validation?.configured;
 
   const stripePromise = useMemo(() => {
-    if (!isStripeConfigured) return null;
-    return loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY as string);
-  }, [isStripeConfigured]);
+    if (!isStripeConfigured || !stripeConfig?.stripeConfig?.publishableKey) return null;
+    return loadStripe(stripeConfig.stripeConfig.publishableKey);
+  }, [isStripeConfigured, stripeConfig]);
 
   useEffect(() => {
     if (isOpen && !clientSecret && isStripeConfigured) {

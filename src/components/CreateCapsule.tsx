@@ -17,11 +17,27 @@ export default function CreateCapsule({ onCapsuleCreated }: CreateCapsuleProps) 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
   const [isPaid, setIsPaid] = useState(false);
+  const [stripeConfig, setStripeConfig] = useState<any>(null);
+
+  // Fetch Stripe configuration from server
+  useEffect(() => {
+    const fetchStripeConfig = async () => {
+      try {
+        const response = await fetch('/api/stripe/config');
+        if (response.ok) {
+          const data = await response.json();
+          setStripeConfig(data);
+        }
+      } catch (error) {
+        console.error('Error fetching Stripe config:', error);
+      }
+    };
+    
+    fetchStripeConfig();
+  }, []);
 
   // Check if Stripe is configured
-  const isStripeConfigured = typeof window !== 'undefined' && 
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && 
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY !== 'pk_test_placeholder';
+  const isStripeConfigured = stripeConfig?.validation?.configured;
 
   // Load initial state
   useEffect(() => {

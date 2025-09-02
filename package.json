@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-jwt": "node generate-jwt-secret.js"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.8.0",

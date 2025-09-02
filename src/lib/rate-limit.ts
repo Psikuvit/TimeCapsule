@@ -50,8 +50,8 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 export const authRateLimiter = new RateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5, // 5 requests per 15 minutes
+  windowMs: 1 * 60 * 1000, // 1 minute
+  maxRequests: 50, // 50 requests per minute (for testing)
 });
 
 export function withRateLimit(
