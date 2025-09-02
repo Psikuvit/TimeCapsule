@@ -1,9 +1,12 @@
 export interface TimeCapsule {
   id: string;
+  userId: string;
   message: string;
-  unlockDate: Date;
+  deliveryDate: Date;
+  isDelivered: boolean;
+  deliveredAt?: Date;
   createdAt: Date;
-  isUnlocked: boolean;
+  updatedAt: Date;
 }
 
 export interface CreateCapsuleData {
@@ -16,4 +19,12 @@ export interface CapsuleStatus {
   daysUntilUnlock?: number;
   hoursUntilUnlock?: number;
   minutesUntilUnlock?: number;
+}
+
+export interface ApiCapsuleResponse {
+  capsules: TimeCapsule[];
+}
+
+export interface CreateCapsuleResponse {
+  capsule: TimeCapsule;
 } 

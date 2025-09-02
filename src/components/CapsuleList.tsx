@@ -4,14 +4,26 @@ import { useState, useEffect } from 'react';
 import { TimeCapsule } from '@/types/capsule';
 import { getAllCapsules, getCapsuleStatus, formatTimeRemaining, deleteCapsule } from '@/utils/capsule';
 
-export default function CapsuleList() {
+interface CapsuleListProps {
+  onCapsuleDeleted?: () => void; // Callback to notify parent of deletion
+}
+
+export default function CapsuleList({ onCapsuleDeleted }: CapsuleListProps) {
   const [capsules, setCapsules] = useState<TimeCapsule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [forceUpdate, setForceUpdate] = useState(0);
 
   useEffect(() => {
-    const loadCapsules = () => {
-      const allCapsules = getAllCapsules();
-      setCapsules(allCapsules.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    const loadCapsules = async () => {
+      setIsLoading(true);
+      try {
+        const allCapsules = await getAllCapsules();
+        setCapsules(allCapsules.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+      } catch (error) {
+        console.error('Error loading capsules:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     loadCapsules();
@@ -24,16 +36,37 @@ export default function CapsuleList() {
     return () => clearInterval(interval);
   }, [forceUpdate]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setForceUpdate(prev => prev + 1);
   };
 
-  const handleDeleteCapsule = (capsuleId: string) => {
+  const handleDeleteCapsule = async (capsuleId: string) => {
     if (window.confirm('Are you sure you want to delete this time capsule? This action cannot be undone.')) {
-      deleteCapsule(capsuleId);
-      setForceUpdate(prev => prev + 1);
+      const success = await deleteCapsule(capsuleId);
+      if (success) {
+        setForceUpdate(prev => prev + 1);
+        
+        // Notify parent component about the deletion
+        if (onCapsuleDeleted) {
+          onCapsuleDeleted();
+        }
+        
+        // Trigger a custom event to notify other components
+        window.dispatchEvent(new CustomEvent('capsuleDeleted'));
+      } else {
+        alert('Failed to delete capsule. Please try again.');
+      }
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-500 dark:text-gray-400">Loading capsules...</p>
+      </div>
+    );
+  }
 
   if (capsules.length === 0) {
     return (
@@ -103,7 +136,7 @@ export default function CapsuleList() {
                   </div>
                   
                   <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                    Unlocks: {capsule.unlockDate.toLocaleString()}
+                    Unlocks: {capsule.deliveryDate.toLocaleString()}
                   </div>
                   
                   {status.isUnlocked ? (
