@@ -2,10 +2,13 @@ import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!JWT_SECRET) {
-  throw new Error(
-    'JWT_SECRET environment variable must be set to a secure random string'
-  );
+// Only throw error at runtime if JWT functions are actually called
+function validateJWTSecret() {
+  if (!JWT_SECRET) {
+    throw new Error(
+      'JWT_SECRET environment variable must be set to a secure random string'
+    );
+  }
 }
 
 export interface JWTPayload {
@@ -17,11 +20,9 @@ export interface JWTPayload {
 }
 
 export function signAccessToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): string {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET not configured');
-  }
+  validateJWTSecret();
 
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, JWT_SECRET!, {
     expiresIn: '15m', // 15 minutes
     issuer: 'timecapsule-app',
     audience: 'timecapsule-users',
@@ -29,12 +30,10 @@ export function signAccessToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): strin
 }
 
 export function verifyAccessToken(token: string): JWTPayload {
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET not configured');
-  }
+  validateJWTSecret();
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET, {
+    const decoded = jwt.verify(token, JWT_SECRET!, {
       issuer: 'timecapsule-app',
       audience: 'timecapsule-users',
     }) as JWTPayload;
