@@ -1,12 +1,40 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ENV_VARS, getEnvValidationSummary } from '../../lib/env-validation';
+
+interface DebugResult {
+  [key: string]: unknown;
+}
+
+interface EnvVarConfig {
+  isConfigured: boolean;
+  hasValue: boolean;
+  value: string | null;
+  description?: string;
+  required?: boolean;
+  name?: string;
+  defaultValue?: string;
+}
+
+interface EnvValidationSummary {
+  total: number;
+  configured: number;
+  missing: number;
+  usingDefaults: number;
+  isValid: boolean;
+  errors?: string[];
+}
+
+interface EnvValidation {
+  envValidation: EnvValidationSummary;
+  envVars: Record<string, EnvVarConfig>;
+  serverTime: string;
+}
 
 export default function DebugPage() {
-  const [result, setResult] = useState<any>(null);
+  const [result, setResult] = useState<DebugResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [envValidation, setEnvValidation] = useState<any>(null);
+  const [envValidation, setEnvValidation] = useState<EnvValidation | null>(null);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -150,7 +178,7 @@ export default function DebugPage() {
          <div className="mt-8">
            <h2 className="text-lg font-semibold mb-4">Environment Variables Check:</h2>
                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {envValidation?.envVars && Object.entries(envValidation.envVars).map(([key, config]: [string, any]) => {
+              {envValidation?.envVars && Object.entries(envValidation.envVars).map(([key, config]: [string, EnvVarConfig]) => {
                 const hasValue = config.isConfigured;
                 const isRequired = config.required;
                
@@ -194,16 +222,16 @@ export default function DebugPage() {
              <h3 className="font-semibold text-gray-800 mb-2">Validation Summary:</h3>
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                             <div>
-               <span className="font-semibold">Total Variables:</span> {envValidation?.envValidation?.summary?.total || 0}
+               <span className="font-semibold">Total Variables:</span> {envValidation?.envValidation?.total || 0}
              </div>
              <div>
-               <span className="font-semibold text-green-600">Configured:</span> {envValidation?.envValidation?.summary?.configured || 0}
+               <span className="font-semibold text-green-600">Configured:</span> {envValidation?.envValidation?.configured || 0}
              </div>
              <div>
-               <span className="font-semibold text-red-600">Missing:</span> {envValidation?.envValidation?.summary?.missing || 0}
+               <span className="font-semibold text-red-600">Missing:</span> {envValidation?.envValidation?.missing || 0}
              </div>
              <div>
-               <span className="font-semibold text-blue-600">Using Defaults:</span> {envValidation?.envValidation?.summary?.usingDefaults || 0}
+               <span className="font-semibold text-blue-600">Using Defaults:</span> {envValidation?.envValidation?.usingDefaults || 0}
              </div>
              </div>
              {!envValidation?.envValidation?.isValid && (

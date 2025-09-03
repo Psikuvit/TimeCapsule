@@ -50,6 +50,18 @@ export type DbUser = {
   updatedAt: Date;
 };
 
+export type DbUserSettings = {
+  _id: ObjectId;
+  id: string;
+  userId: string;
+  emailNotifications: boolean;
+  theme: string;
+  language: string;
+  timezone: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 // User management
 export const userService = {
   // Create or update user from OAuth
@@ -130,7 +142,7 @@ export const userService = {
     const users = db.collection<DbUser>('users');
     const now = new Date();
     
-    const updateData: any = { updatedAt: now };
+    const updateData: Partial<DbUser> = { updatedAt: now };
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.email !== undefined) updateData.email = updates.email;
     if (updates.picture !== undefined) updateData.picture = updates.picture;
@@ -253,7 +265,7 @@ export const userSettingsService = {
   // Get or create user settings
   async getOrCreateUserSettings(userId: string) {
     const db = await getDatabase();
-    const coll: Collection<any> = db.collection('userSettings');
+    const coll: Collection<DbUserSettings> = db.collection('userSettings');
     let settings = await coll.findOne({ userId });
     if (!settings) {
       settings = {
@@ -267,7 +279,7 @@ export const userSettingsService = {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      await coll.insertOne(settings as any);
+      await coll.insertOne(settings);
     }
     return settings;
   },
@@ -280,7 +292,7 @@ export const userSettingsService = {
     timezone: string;
   }>) {
     const db = await getDatabase();
-    const coll: Collection<any> = db.collection('userSettings');
+    const coll: Collection<DbUserSettings> = db.collection('userSettings');
     const now = new Date();
     await coll.updateOne(
       { userId },

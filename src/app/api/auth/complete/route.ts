@@ -38,7 +38,18 @@ async function handleAuthComplete(req: NextRequest) {
       );
     }
 
-    let userData: any;
+    interface UserData {
+      id: string;
+      email: string;
+      name: string;
+      picture?: string;
+      provider: string;
+      providerId: string;
+      accessToken?: string;
+      refreshToken?: string;
+    }
+
+    let userData: UserData;
 
     if (provider === 'github') {
       // Exchange code for access token
@@ -84,7 +95,12 @@ async function handleAuthComplete(req: NextRequest) {
           },
         });
         const emails = await emailsResponse.json();
-        const primaryEmail = emails.find((e: any) => e.primary && e.verified);
+        interface GitHubEmail {
+          email: string;
+          primary: boolean;
+          verified: boolean;
+        }
+        const primaryEmail = (emails as GitHubEmail[]).find((e) => e.primary && e.verified);
         email = primaryEmail?.email;
       }
 
@@ -97,6 +113,7 @@ async function handleAuthComplete(req: NextRequest) {
 
       userData = {
         id: user.id.toString(),
+        providerId: user.id.toString(),
         email,
         name: user.name,
         picture: user.avatar_url,
@@ -143,6 +160,7 @@ async function handleAuthComplete(req: NextRequest) {
 
       userData = {
         id: user.id,
+        providerId: user.id,
         email: user.email,
         name: user.name,
         picture: user.picture,

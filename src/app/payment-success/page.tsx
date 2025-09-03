@@ -2,15 +2,11 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { setPaidStatus } from '@/utils/capsule';
 
 export default function PaymentSuccess() {
   const router = useRouter();
 
   useEffect(() => {
-    // Set user as paid
-    setPaidStatus(true);
-    
     // Redirect to home page after 3 seconds
     const timer = setTimeout(() => {
       router.push('/');

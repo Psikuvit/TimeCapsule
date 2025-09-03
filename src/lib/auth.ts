@@ -1,39 +1,4 @@
 
-const api = {
-  upsertUser: async (payload: any) => {
-    const res = await fetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    });
-    if (!res.ok) throw new Error('Failed to upsert user');
-    return res.json();
-  },
-  getUserById: async (id: string) => {
-    const res = await fetch(`/api/users?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch user');
-    return res.json();
-  },
-  updatePremium: async (userId: string, isPremium: boolean, premiumExpiresAt?: Date) => {
-    const res = await fetch('/api/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, isPremium, premiumExpiresAt }),
-    });
-    if (!res.ok) throw new Error('Failed to update premium');
-    return res.json();
-  },
-  updateProfile: async (userId: string, updates: any) => {
-    const res = await fetch('/api/users', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, ...updates }),
-    });
-    if (!res.ok) throw new Error('Failed to update profile');
-    return res.json();
-  },
-};
-
 export interface User {
   id: string;
   email: string;
@@ -62,8 +27,34 @@ export const OAUTH_PROVIDERS = {
 
 export type OAuthProvider = typeof OAUTH_PROVIDERS[keyof typeof OAUTH_PROVIDERS];
 
+interface OAuthProviderConfig {
+  clientId: string;
+  redirectUri: string;
+  scope: string;
+  authUrl: string;
+  tokenUrl: string;
+  userInfoUrl: string;
+}
+
+interface OAuthConfig {
+  [provider: string]: OAuthProviderConfig;
+}
+
+interface OAuthValidation {
+  [provider: string]: {
+    configured: boolean;
+    missing?: string[];
+  };
+}
+
+interface OAuthConfigResponse {
+  oauthConfig: OAuthConfig;
+  validation: OAuthValidation;
+  serverTime: string;
+}
+
 // OAuth configuration - will be fetched from server
-let OAUTH_CONFIG: any = null;
+let OAUTH_CONFIG: OAuthConfigResponse | null = null;
 
 // Function to get OAuth configuration from server
 async function getOAuthConfig() {
@@ -86,8 +77,12 @@ async function getOAuthConfig() {
 
 // Authentication functions
 export const login = async (provider: OAuthProvider): Promise<void> => {
-  const oauthConfig = await getOAuthConfig();
-  const config = oauthConfig[provider as keyof typeof oauthConfig];
+  const configResponse = await getOAuthConfig();
+  if (!configResponse) {
+    throw new Error('OAuth configuration not available');
+  }
+  
+  const config = configResponse.oauthConfig[provider as keyof typeof configResponse.oauthConfig];
   
   if (!config?.clientId) {
     throw new Error(`${provider} OAuth is not configured. Please set NEXT_PUBLIC_${provider.toUpperCase()}_CLIENT_ID environment variable.`);
@@ -133,8 +128,12 @@ export const handleOAuthCallback = async (code: string, state: string, incomingP
   sessionStorage.removeItem('oauth_state');
   sessionStorage.removeItem('oauth_provider');
 
-  const oauthConfig = await getOAuthConfig();
-  const config = oauthConfig[provider as keyof typeof oauthConfig];
+  const configResponse = await getOAuthConfig();
+  if (!configResponse) {
+    throw new Error('OAuth configuration not available');
+  }
+  
+  const config = configResponse.oauthConfig[provider as keyof typeof configResponse.oauthConfig];
   if (!config) {
     throw new Error(`Unsupported OAuth provider: ${provider}`);
   }
@@ -185,71 +184,6 @@ export const handleOAuthCallback = async (code: string, state: string, incomingP
     console.error('OAuth callback error:', error);
     throw new Error('Authentication failed. Please try again.');
   }
-};
-
-const fetchUserProfile = async (provider: string, accessToken: string, userInfoUrl: string): Promise<any> => {
-  const headers: Record<string, string> = {
-    'Authorization': `Bearer ${accessToken}`,
-  };
-
-  // GitHub requires User-Agent header
-  if (provider === 'github') {
-    headers['User-Agent'] = 'TimeCapsule-App';
-  }
-
-  const response = await fetch(userInfoUrl, { headers });
-  
-  if (!response.ok) {
-    throw new Error('Failed to fetch user profile');
-  }
-
-  return response.json();
-};
-
-// Helper: derive a reasonable display name
-const resolveName = (userInfo: any): string | null => {
-  const candidate = userInfo?.name || userInfo?.login || userInfo?.username || null;
-  if (!candidate) return null;
-  return String(candidate);
-};
-
-// Helper: ensure we have a provider id
-const resolveProviderId = (userInfo: any): string => {
-  const id = userInfo?.id ?? userInfo?.sub ?? null;
-  if (!id) return `oauth_${Date.now()}`;
-  return String(id);
-};
-
-// Helper: resolve email, including GitHub secondary API when needed
-const resolveEmail = async (provider: string, accessToken: string, userInfo: any): Promise<string | null> => {
-  // Google normally returns email when scope includes 'email'
-  if (provider === 'google') {
-    return userInfo?.email ?? null;
-  }
-
-  if (provider === 'github') {
-    if (userInfo?.email) return userInfo.email;
-    // Fallback: call the user/emails endpoint to get primary verified email
-    try {
-      const res = await fetch('https://api.github.com/user/emails', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Accept': 'application/vnd.github+json',
-          'User-Agent': 'TimeCapsule-App',
-        },
-      });
-      if (!res.ok) return null;
-      const emails = await res.json();
-      if (Array.isArray(emails)) {
-        const primary = emails.find((e: any) => e?.primary && e?.verified) || emails.find((e: any) => e?.primary) || emails.find((e: any) => e?.verified);
-        return primary?.email ?? null;
-      }
-    } catch {
-      return null;
-    }
-  }
-
-  return userInfo?.email ?? null;
 };
 
 export const logout = async (): Promise<void> => {
@@ -319,9 +253,9 @@ const generateRandomState = (): string => {
 // Check if OAuth provider is configured
 export const isOAuthProviderConfigured = (provider: OAuthProvider): boolean => {
   if (!OAUTH_CONFIG || typeof OAUTH_CONFIG !== 'object') return false;
-  const config = OAUTH_CONFIG[provider as keyof typeof OAUTH_CONFIG];
+  const config = OAUTH_CONFIG.validation[provider as keyof typeof OAUTH_CONFIG.validation];
   if (!config || typeof config !== 'object') return false;
-  return !!(config.clientId);
+  return !!config.configured;
 };
 
 const parseProviderFromState = (state: string | null): string | null => {

@@ -9,11 +9,21 @@ interface LoginModalProps {
   onClose: () => void;
 }
 
+interface AuthConfigValidation {
+  [provider: string]: {
+    configured: boolean;
+  };
+}
+
+interface AuthConfig {
+  validation: AuthConfigValidation;
+}
+
 export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { login, isLoading } = useAuth();
   const [selectedProvider, setSelectedProvider] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [authConfig, setAuthConfig] = useState<any>(null);
+  const [authConfig, setAuthConfig] = useState<AuthConfig | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
 
   // Fetch OAuth configuration when modal opens
