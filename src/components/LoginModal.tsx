@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { OAUTH_PROVIDERS, OAuthProvider, isOAuthProviderConfigured } from '@/lib/auth';
+import { OAUTH_PROVIDERS, OAuthProvider } from '@/lib/auth';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -13,8 +13,50 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
   const { login, isLoading } = useAuth();
   const [selectedProvider, setSelectedProvider] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [authConfig, setAuthConfig] = useState<any>(null);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  // Fetch OAuth configuration when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const fetchConfig = async () => {
+        try {
+          setConfigLoading(true);
+          const response = await fetch('/api/auth/config');
+          if (response.ok) {
+            const data = await response.json();
+            setAuthConfig(data);
+          } else {
+            console.error('Failed to fetch OAuth config');
+            setAuthConfig(null);
+          }
+        } catch (error) {
+          console.error('Error fetching OAuth config:', error);
+          setAuthConfig(null);
+        } finally {
+          setConfigLoading(false);
+        }
+      };
+      
+      fetchConfig();
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
+
+  // Show loading while fetching config
+  if (configLoading) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading authentication options...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleLogin = async (provider: OAuthProvider) => {
     try {
@@ -94,8 +136,14 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     }
   };
 
-  // Filter only configured OAuth providers
-  const configuredProviders = Object.values(OAUTH_PROVIDERS).filter(isOAuthProviderConfigured);
+  // Helper function to check if provider is configured
+  const isProviderConfigured = (provider: OAuthProvider): boolean => {
+    if (!authConfig?.validation) return false;
+    return authConfig.validation[provider]?.configured || false;
+  };
+
+  // Filter only configured OAuth providers based on fetched config
+  const configuredProviders = Object.values(OAUTH_PROVIDERS).filter(isProviderConfigured);
 
   if (configuredProviders.length === 0) {
     return (

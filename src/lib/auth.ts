@@ -163,9 +163,7 @@ export const handleOAuthCallback = async (code: string, state: string, incomingP
       throw new Error(errorData.error || 'Failed to exchange authorization code for token');
     }
 
-    const { userId } = await tokenResponse.json();
-    // Fetch session user via cookie-based session
-    const dbUser = await api.getUserById(userId);
+    const { user: dbUser } = await tokenResponse.json();
 
     // Create user object for frontend
     const user: User = {
@@ -320,8 +318,10 @@ const generateRandomState = (): string => {
 
 // Check if OAuth provider is configured
 export const isOAuthProviderConfigured = (provider: OAuthProvider): boolean => {
+  if (!OAUTH_CONFIG || typeof OAUTH_CONFIG !== 'object') return false;
   const config = OAUTH_CONFIG[provider as keyof typeof OAUTH_CONFIG];
-  return !!(config?.clientId);
+  if (!config || typeof config !== 'object') return false;
+  return !!(config.clientId);
 };
 
 const parseProviderFromState = (state: string | null): string | null => {

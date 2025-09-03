@@ -1,24 +1,42 @@
 # 🕰️ TimeCapsule
 
-A secure, production-ready Next.js application that allows users to create time capsules with messages that are delivered at future dates. Built with enterprise-grade security features, OAuth authentication, and Stripe payments.
+A secure, production-ready Next.js application that allows users to create time capsules with messages that are unlocked at future dates. Built with enterprise-grade security features, OAuth authentication, and Stripe payments for premium functionality.
 
 ## ✨ Features
 
-- **🔐 Secure Authentication**: OAuth with Google and GitHub
-- **🛡️ Enterprise Security**: Rate limiting, input validation, security headers
-- **💾 MongoDB Storage**: Scalable database with proper indexing
-- **💳 Premium Features**: Stripe integration for premium subscriptions
-- **📱 Modern UI**: Responsive design with Tailwind CSS
-- **🚀 Production Ready**: Security headers, validation, monitoring
+- **🔐 Secure Authentication**: OAuth with Google and GitHub using JWT tokens
+- **🛡️ Enterprise Security**: Comprehensive rate limiting, input validation, security headers
+- **💾 MongoDB Storage**: Scalable database with proper indexing and user ownership validation
+- **💳 Premium Features**: Stripe integration for unlimited capsule creation (free users get 10 capsules)
+- **📱 Modern UI**: Responsive design with Tailwind CSS and React 19
+- **🚀 Production Ready**: Security headers, middleware, validation, comprehensive error handling
+- **⏰ Time Capsule Logic**: Messages remain locked until their specified unlock date
+- **🎯 User Experience**: Real-time updates, tab-based interface, payment integration
 
 ## 🏗️ Architecture
 
-- **Frontend**: Next.js 14 with App Router, TypeScript, Tailwind CSS
-- **Backend**: Next.js API Routes with rate limiting and validation
-- **Database**: MongoDB with native driver
-- **Authentication**: JWT tokens with HttpOnly cookies
-- **Security**: Rate limiting, input validation, security headers
-- **Payments**: Stripe Payment Intents
+- **Frontend**: Next.js 15 with App Router, TypeScript, Tailwind CSS v4, React 19
+- **Backend**: Next.js API Routes with comprehensive rate limiting and validation
+- **Database**: MongoDB with native driver and proper user ownership checks
+- **Authentication**: JWT tokens (15-min expiry) with HttpOnly, Secure cookies
+- **Security**: Middleware with security headers, rate limiting, input validation, XSS protection
+- **Payments**: Stripe Payment Intents with environment validation
+- **Development**: ESLint, TypeScript strict mode, environment validation utilities
+
+## 🎯 Core Functionality
+
+### Time Capsule System
+- **Message Creation**: Users can create time capsules with custom messages
+- **Future Unlock**: Messages are locked until their specified unlock date (minimum 24 hours)
+- **Ownership Protection**: Users can only access their own capsules
+- **Free Tier**: 10 free time capsules per user
+- **Premium Tier**: Unlimited capsules via Stripe payment
+
+### Security Model
+- **Rate Limiting**: Auth endpoints (5/15min), API endpoints (100/15min)
+- **Input Validation**: Zod schemas, HTML sanitization, date validation
+- **Authentication**: OAuth providers with JWT token management
+- **Authorization**: User ownership validation on all operations
 
 ## 🚀 Quick Start
 
@@ -27,7 +45,7 @@ A secure, production-ready Next.js application that allows users to create time 
 - Node.js 18+ 
 - MongoDB (local or Atlas)
 - OAuth apps (Google, GitHub)
-- Stripe account
+- Stripe account (for premium features)
 
 ### Installation
 
@@ -42,169 +60,319 @@ A secure, production-ready Next.js application that allows users to create time 
    npm install
    ```
 
-3. **Set up environment variables**
+3. **Generate JWT Secret**
    ```bash
-   cp .env.example .env.local
+   npm run generate-jwt
    ```
-   
-   Fill in your environment variables:
+   Copy the generated secret for the next step.
+
+4. **Set up environment variables**
+   Create a `.env.local` file in the project root:
    ```bash
-   # MongoDB
+   # MongoDB (defaults to local instance)
    MONGODB_URI=mongodb://127.0.0.1:27017/timecapsule
    
-   # JWT (REQUIRED - Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
+   # JWT (REQUIRED - Use the generated secret from step 3)
    JWT_SECRET=your-generated-jwt-secret
    
-   # OAuth
-   GITHUB_CLIENT_ID=your_github_client_id
+   # GitHub OAuth (REQUIRED)
+   NEXT_PUBLIC_GITHUB_CLIENT_ID=your_github_client_id
    GITHUB_CLIENT_SECRET=your_github_client_secret
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
    
-   # Stripe
+   # Google OAuth (REQUIRED)
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   GOOGLE_REDIRECT_URI=http://localhost:3000/auth/callback
+   
+   # Stripe (REQUIRED for premium features)
    STRIPE_SECRET_KEY=sk_test_...
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+   PRICE_ID=price_your_stripe_price_id
    ```
 
-4. **Start MongoDB** (if using local instance)
+5. **Start MongoDB** (if using local instance)
    ```bash
    # Start MongoDB service
    ```
 
-5. **Run the development server**
+6. **Run the development server**
    ```bash
    npm run dev
    ```
 
-6. **Open your browser**
-   Navigate to [http://localhost:3000](http://localhost:3000)
+7. **Verify setup**
+   - Navigate to [http://localhost:3000](http://localhost:3000)
+   - Visit [http://localhost:3000/debug](http://localhost:3000/debug) to check environment configuration
 
 ## 🔐 Security Features
 
 ### Rate Limiting
 - **Auth endpoints**: 5 requests per 15 minutes per IP
 - **API endpoints**: 100 requests per 15 minutes per IP
+- **IP identification**: Uses X-Forwarded-For and X-Real-IP headers
 
 ### Input Validation
-- Zod schemas for all user inputs
-- HTML sanitization to prevent XSS
-- Date validation (24+ hours in future)
-- ObjectId format validation
+- **Zod schemas**: Comprehensive validation for all user inputs
+- **HTML sanitization**: Prevents XSS attacks on message content
+- **Date validation**: Ensures unlock dates are 24+ hours in future
+- **ObjectId validation**: Validates MongoDB ObjectId formats
+- **Message limits**: 1-1000 characters with content sanitization
 
-### Security Headers
-- Content Security Policy (CSP)
-- HTTP Strict Transport Security (HSTS)
-- X-Frame-Options (clickjacking protection)
-- X-XSS-Protection
-- Referrer-Policy
+### Security Headers (via Middleware)
+- **Content Security Policy (CSP)**: Restricts script and resource loading
+- **HTTP Strict Transport Security (HSTS)**: Enforces HTTPS in production
+- **X-Frame-Options**: Prevents clickjacking attacks
+- **X-XSS-Protection**: XSS protection for older browsers
+- **X-Content-Type-Options**: Prevents MIME sniffing attacks
+- **Referrer-Policy**: Controls referrer information leakage
+- **Permissions-Policy**: Restricts browser features
 
-### Authentication
-- JWT tokens with short expiration (15 minutes)
-- HttpOnly, Secure cookies
-- OAuth state parameter validation
-- User ownership verification
+### Authentication Security
+- **JWT tokens**: Short-lived (15 minutes) with secure secrets
+- **HttpOnly cookies**: Prevents XSS access to tokens
+- **OAuth state validation**: Prevents CSRF attacks during OAuth flow
+- **User ownership checks**: All data access verified against user ownership
 
 ## 📁 Project Structure
 
 ```
 timecapsule/
 ├── src/
-│   ├── app/                 # Next.js App Router
-│   │   ├── api/            # API endpoints
-│   │   ├── auth/           # OAuth callback
-│   │   └── page.tsx        # Home page
-│   ├── components/         # React components
-│   ├── contexts/           # React contexts
-│   ├── lib/                # Utility libraries
-│   ├── types/              # TypeScript types
-│   └── utils/              # Helper functions
-├── prisma/                 # Database schema (legacy)
-├── public/                 # Static assets
-├── .env.example           # Environment template
-├── ARCHITECTURE.md        # Technical architecture
-├── PRODUCTION_DEPLOYMENT.md # Deployment guide
-└── README.md              # This file
+│   ├── app/                    # Next.js App Router
+│   │   ├── api/               # API endpoints
+│   │   │   ├── auth/          # Authentication routes
+│   │   │   ├── capsules/      # Time capsule CRUD
+│   │   │   ├── create-payment-intent/ # Stripe payment
+│   │   │   ├── debug/         # Development debugging
+│   │   │   ├── session/       # Session management
+│   │   │   ├── stripe/        # Stripe configuration
+│   │   │   └── users/         # User management
+│   │   ├── auth/              # OAuth callback pages
+│   │   ├── debug/             # Environment debugging page
+│   │   ├── payment-success/   # Payment completion page
+│   │   ├── globals.css        # Global styles
+│   │   ├── layout.tsx         # Root layout with AuthProvider
+│   │   └── page.tsx           # Main application page
+│   ├── components/            # React components
+│   │   ├── CapsuleList.tsx    # Display user's capsules
+│   │   ├── CreateCapsule.tsx  # Capsule creation form
+│   │   ├── LoginModal.tsx     # OAuth authentication modal
+│   │   ├── PaymentModal.tsx   # Stripe payment integration
+│   │   └── UserProfile.tsx    # User profile management
+│   ├── contexts/              # React contexts
+│   │   └── AuthContext.tsx    # Authentication state management
+│   ├── lib/                   # Core utilities
+│   │   ├── auth.ts           # Authentication utilities
+│   │   ├── database.ts       # MongoDB connection and services
+│   │   ├── env-validation.ts # Environment variable validation
+│   │   ├── jwt.ts            # JWT token management
+│   │   ├── rate-limit.ts     # Rate limiting implementation
+│   │   ├── stripe-client.ts  # Stripe client configuration
+│   │   ├── stripe.ts         # Stripe server utilities
+│   │   └── validation.ts     # Input validation schemas
+│   ├── types/                 # TypeScript type definitions
+│   │   └── capsule.ts        # Time capsule interfaces
+│   ├── utils/                 # Helper functions
+│   │   └── capsule.ts        # Capsule utility functions
+│   └── middleware.ts          # Security headers middleware
+├── public/                    # Static assets
+├── generate-jwt-secret.js     # JWT secret generation utility
+├── eslint.config.mjs         # ESLint configuration
+├── next.config.ts            # Next.js configuration
+├── package.json              # Dependencies and scripts
+├── postcss.config.mjs        # PostCSS configuration
+├── tsconfig.json             # TypeScript configuration
+├── ARCHITECTURE.md           # Technical architecture documentation
+├── PRODUCTION_DEPLOYMENT.md  # Production deployment guide
+├── SETUP_GUIDE.md           # Environment setup guide
+└── README.md                # This file
 ```
 
 ## 🌐 API Endpoints
 
 ### Authentication
-- `POST /api/auth/complete` - Complete OAuth flow
-- `GET /api/session` - Get current user session
-- `POST /api/auth/logout` - Clear authentication
+- `POST /api/auth/complete` - Complete OAuth flow, set JWT cookie
+- `GET /api/auth/config` - Get OAuth configuration
+- `POST /api/auth/logout` - Clear authentication cookie
+- `POST /api/auth/token` - Token management
+- `GET /api/session` - Get current user session from JWT
 
 ### Users
-- `GET /api/users?id={userId}` - Get user profile
-- `PATCH /api/users` - Update user profile
+- `GET /api/users?id={userId}` - Get user profile (own data only)
+- `POST /api/users` - Create/update user profile
+- `PATCH /api/users` - Update user profile (own data only)
 
-### Capsules
+### Time Capsules
 - `GET /api/capsules` - Get user's time capsules
-- `POST /api/capsules` - Create new time capsule
-- `DELETE /api/capsules?id={capsuleId}` - Delete capsule
+- `POST /api/capsules` - Create new time capsule (with limits)
+- `DELETE /api/capsules?id={capsuleId}` - Delete time capsule (own only)
 
-### Payments
-- `POST /api/create-payment-intent` - Create Stripe payment
+### Payments & Premium
+- `POST /api/create-payment-intent` - Create Stripe payment intent
+- `GET /api/stripe/config` - Get Stripe configuration status
+
+### Debug & Development
+- `GET /api/debug/env` - Environment variable validation (development only)
 
 ## 🗄️ Database Schema
 
 ### Collections
-- **users**: OAuth profiles, premium status
-- **timeCapsules**: Messages, delivery dates, ownership
-- **payments**: Stripe payment records
-- **userSettings**: User preferences
 
-### Indexes
-- Email uniqueness
-- Provider + ProviderId uniqueness
-- User capsules by delivery date
-- Payment intents uniqueness
+#### Users Collection
+```typescript
+{
+  _id: ObjectId,
+  email: string,
+  name: string,
+  avatar?: string,
+  provider: 'google' | 'github',
+  providerId: string,
+  isPremium: boolean,
+  premiumExpiresAt?: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### TimeCapsules Collection
+```typescript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  message: string,
+  deliveryDate: Date,
+  isDelivered: boolean,
+  deliveredAt?: Date,
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+#### Payments Collection
+```typescript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  stripePaymentIntentId: string,
+  amount: number,
+  currency: string,
+  status: string,
+  createdAt: Date
+}
+```
+
+### Database Indexes
+- **Users**: Email uniqueness, Provider + ProviderId uniqueness
+- **TimeCapsules**: userId for fast user capsule queries, deliveryDate for time-based queries
+- **Payments**: userId for user payment history, stripePaymentIntentId for uniqueness
 
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
-1. Install Vercel CLI: `npm i -g vercel`
-2. Deploy: `vercel --prod`
-3. Set environment variables in Vercel dashboard
+1. **Install Vercel CLI**: `npm i -g vercel`
+2. **Deploy**: `vercel --prod`
+3. **Set environment variables** in Vercel dashboard or via CLI
 
 ### Environment Variables for Production
 ```bash
+# Environment
 NODE_ENV=production
-MONGODB_URI=mongodb+srv://...
-JWT_SECRET=your-production-jwt-secret
-GITHUB_CLIENT_ID=your_production_github_id
+
+# Database
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/timecapsule?retryWrites=true&w=majority
+
+# JWT (Generate new for production)
+JWT_SECRET=your-production-jwt-secret-32-chars-minimum
+
+# GitHub OAuth (Production app)
+NEXT_PUBLIC_GITHUB_CLIENT_ID=your_production_github_id
 GITHUB_CLIENT_SECRET=your_production_github_secret
-GOOGLE_CLIENT_ID=your_production_google_id
+
+# Google OAuth (Production app)
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_production_google_id
 GOOGLE_CLIENT_SECRET=your_production_google_secret
 GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/callback
-STRIPE_SECRET_KEY=sk_live_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
+
+# Stripe (Live keys)
+STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key
+PRICE_ID=price_your_live_price_id
 ```
 
-## 🧪 Testing
+### Pre-Deployment Checklist
+- [ ] Generate production JWT secret
+- [ ] Create production OAuth apps with correct redirect URIs
+- [ ] Set up MongoDB Atlas with proper security
+- [ ] Configure Stripe live keys and products
+- [ ] Test all environment variables
+- [ ] Verify security headers in production
+- [ ] Test OAuth flows with production URLs
 
-### Security Testing
-- Test rate limiting
-- Verify input validation
-- Check authentication flows
-- Test authorization boundaries
+## 🧪 Development & Testing
 
-### Load Testing
-- Test API endpoints under load
-- Verify rate limiting effectiveness
-- Monitor database performance
+### Available Scripts
+```bash
+npm run dev          # Start development server with Turbopack
+npm run build        # Build production bundle
+npm run start        # Start production server
+npm run lint         # Run ESLint
+npm run generate-jwt # Generate JWT secret
+```
 
-## 📊 Monitoring
+### Environment Validation
+- Visit `/debug` in development to check environment setup
+- All required variables are validated on startup
+- Helpful error messages for missing configuration
+
+### Testing Checklist
+- [ ] OAuth authentication flows (Google, GitHub)
+- [ ] Time capsule creation and retrieval
+- [ ] Free tier limits (10 capsules)
+- [ ] Premium payment flow
+- [ ] Rate limiting enforcement
+- [ ] Input validation and sanitization
+- [ ] Security headers verification
+
+## 📊 Monitoring & Security
 
 ### Security Monitoring
-- Failed login attempts
-- Rate limit violations
-- Suspicious IP addresses
-- Database access logs
+- Rate limit violations and blocking
+- Failed authentication attempts
+- Suspicious IP address activity
+- Database access pattern monitoring
+- Input validation failure tracking
 
 ### Performance Monitoring
-- API response times
-- Database query performance
-- Error rates and types
+- API endpoint response times
+- Database query performance optimization
+- Error rates and categorization
+- Authentication flow metrics
+
+### Built-in Utilities
+- Environment variable validation system
+- Comprehensive error logging
+- Rate limiting with IP tracking
+- Security header enforcement via middleware
+
+## 🛠️ Development Features
+
+### Environment Validation System
+- Automatic validation of all required environment variables
+- Helpful setup instructions for missing variables
+- Development debug page at `/debug`
+- Clear error messages with setup URLs
+
+### Security-First Development
+- All API endpoints protected with rate limiting
+- Comprehensive input validation using Zod
+- User ownership validation on all operations
+- Secure JWT token management with HttpOnly cookies
+
+### Developer Experience
+- TypeScript strict mode for type safety
+- ESLint configuration for code quality
+- Tailwind CSS v4 for modern styling
+- Hot reload with Turbopack in development
 
 ## 🤝 Contributing
 
@@ -218,19 +386,37 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_...
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🆘 Support & Documentation
 
-- **Documentation**: Check [ARCHITECTURE.md](ARCHITECTURE.md) for technical details
-- **Deployment**: See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for production setup
+- **Quick Setup**: Check [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed environment configuration
+- **Architecture**: Review [ARCHITECTURE.md](ARCHITECTURE.md) for technical implementation details
+- **Production Deployment**: See [PRODUCTION_DEPLOYMENT.md](PRODUCTION_DEPLOYMENT.md) for production setup and security
+- **Environment Debugging**: Visit `/debug` in development for configuration validation
 - **Issues**: Report bugs and feature requests via GitHub Issues
+
+## 📋 Key Technologies
+
+- **Framework**: Next.js 15 with App Router and React 19
+- **Language**: TypeScript with strict mode
+- **Styling**: Tailwind CSS v4
+- **Database**: MongoDB with native driver
+- **Authentication**: JWT tokens with OAuth (Google, GitHub)
+- **Payments**: Stripe Payment Intents
+- **Security**: Comprehensive middleware, rate limiting, input validation
+- **Development**: ESLint, Turbopack, environment validation
 
 ## 🙏 Acknowledgments
 
-- Next.js team for the amazing framework
-- MongoDB for the database
-- Stripe for payment processing
-- OAuth providers (Google, GitHub) for authentication
+- **Next.js team** for the amazing framework and App Router
+- **MongoDB** for the robust database solution
+- **Stripe** for secure payment processing
+- **OAuth providers** (Google, GitHub) for authentication services
+- **Vercel** for seamless deployment and hosting
+- **TypeScript team** for excellent type safety
+- **Tailwind CSS** for modern utility-first styling
 
 ---
 
-**Built with ❤️ and security in mind**
+**Built with ❤️, security, and modern web standards in mind**
+
+*TimeCapsule - Secure messages for your future self*
