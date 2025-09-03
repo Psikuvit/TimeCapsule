@@ -2,11 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   try {
+    // Determine the base URL for redirect URIs
+    const headers = request.headers;
+    const host = headers.get('host');
+    const protocol = headers.get('x-forwarded-proto') || 'http';
+    const baseUrl = `${protocol}://${host}`;
+    const redirectUri = `${baseUrl}/auth/callback`;
+
     // Get OAuth configuration from server side
     const oauthConfig = {
       google: {
         clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        redirectUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3000/auth/callback',
+        redirectUri: process.env.GOOGLE_REDIRECT_URI || redirectUri,
         scope: 'openid email profile',
         authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
         tokenUrl: 'https://oauth2.googleapis.com/token',
@@ -14,7 +21,7 @@ export async function GET(request: NextRequest) {
       },
       github: {
         clientId: process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID,
-        redirectUri: 'http://localhost:3000/auth/callback',
+        redirectUri: redirectUri,
         scope: 'read:user user:email',
         authUrl: 'https://github.com/login/oauth/authorize',
         tokenUrl: 'https://github.com/login/oauth/access_token',

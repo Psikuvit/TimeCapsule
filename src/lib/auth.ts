@@ -77,38 +77,56 @@ async function getOAuthConfig() {
 
 // Authentication functions
 export const login = async (provider: OAuthProvider): Promise<void> => {
-  const configResponse = await getOAuthConfig();
-  if (!configResponse) {
-    throw new Error('OAuth configuration not available');
+  try {
+    console.log('Starting login process for provider:', provider);
+    
+    const configResponse = await getOAuthConfig();
+    console.log('Config response received:', configResponse);
+    
+    if (!configResponse) {
+      throw new Error('OAuth configuration not available. Please check your environment variables.');
+    }
+    
+    if (!configResponse.oauthConfig) {
+      throw new Error('OAuth configuration object is missing from server response.');
+    }
+    
+    const config = configResponse.oauthConfig[provider as keyof typeof configResponse.oauthConfig];
+    console.log(`Config for ${provider}:`, config);
+    
+    if (!config) {
+      throw new Error(`OAuth configuration for ${provider} is not found. Available providers: ${Object.keys(configResponse.oauthConfig).join(', ')}`);
+    }
+    
+    if (!config.clientId) {
+      throw new Error(`${provider} OAuth is not configured. Please set NEXT_PUBLIC_${provider.toUpperCase()}_CLIENT_ID environment variable.`);
+    }
+
+    // Generate state parameter for security
+    const nonce = generateRandomState();
+    const stateData = { nonce, provider };
+    const state = encodeURIComponent(JSON.stringify(stateData));
+    sessionStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('oauth_provider', provider);
+
+    // Build OAuth URL
+    const params = new URLSearchParams({
+      client_id: config.clientId,
+      redirect_uri: config.redirectUri,
+      scope: config.scope,
+      response_type: 'code',
+      state: state,
+      ...(provider === 'google' && { access_type: 'offline' }),
+    });
+
+    const authUrl = `${config.authUrl}?${params.toString()}`;
+    
+    // Redirect to OAuth provider
+    window.location.href = authUrl;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
   }
-  
-  const config = configResponse.oauthConfig[provider as keyof typeof configResponse.oauthConfig];
-  
-  if (!config?.clientId) {
-    throw new Error(`${provider} OAuth is not configured. Please set NEXT_PUBLIC_${provider.toUpperCase()}_CLIENT_ID environment variable.`);
-  }
-
-  // Generate state parameter for security
-  const nonce = generateRandomState();
-  const stateData = { nonce, provider };
-  const state = encodeURIComponent(JSON.stringify(stateData));
-  sessionStorage.setItem('oauth_state', state);
-  sessionStorage.setItem('oauth_provider', provider);
-
-  // Build OAuth URL
-  const params = new URLSearchParams({
-    client_id: config.clientId,
-    redirect_uri: config.redirectUri,
-    scope: config.scope,
-    response_type: 'code',
-    state: state,
-    ...(provider === 'google' && { access_type: 'offline' }),
-  });
-
-  const authUrl = `${config.authUrl}?${params.toString()}`;
-  
-  // Redirect to OAuth provider
-  window.location.href = authUrl;
 };
 
 export const handleOAuthCallback = async (code: string, state: string, incomingProvider: string): Promise<User> => {
