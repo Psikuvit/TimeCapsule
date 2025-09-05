@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import CreateCapsule from '@/components/CreateCapsule';
 import CapsuleList from '@/components/CapsuleList';
@@ -76,12 +75,10 @@ export default function Home() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md mx-auto text-center">
           <div className="flex items-center justify-center mb-6">
-            <Image
+            <img
               src="/icon.svg"
               alt="Clock"
-              width={64}
-              height={64}
-              className="text-blue-600 dark:text-blue-400 mr-4"
+              className="w-16 h-16 text-blue-600 dark:text-blue-400 mr-4"
             />
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
               TimeCapsule
@@ -112,12 +109,10 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-2">
-            <Image
+            <img
               src="/icon.svg"
               alt="Clock"
-              width={64}
-              height={64}
-              className="text-blue-600 dark:text-blue-400 mr-4"
+              className="w-12 h-12 text-blue-600 dark:text-blue-400 mr-3"
             />
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
               TimeCapsule
