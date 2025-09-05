@@ -6,11 +6,14 @@ import { authCompleteSchema } from '@/lib/validation';
 
 async function handleAuthComplete(req: NextRequest) {
   try {
+    console.log('Auth complete request received');
     const body = await req.json();
+    console.log('Request body:', body);
     
     // Validate input
     const validationResult = authCompleteSchema.safeParse(body);
     if (!validationResult.success) {
+      console.error('Validation failed:', validationResult.error.issues);
       return NextResponse.json(
         { 
           error: 'Validation failed', 
@@ -21,6 +24,7 @@ async function handleAuthComplete(req: NextRequest) {
     }
 
     const { code, state } = validationResult.data;
+    console.log('Extracted code and state:', { code: !!code, state });
 
     // Decode state to get provider
     let provider: string;
@@ -37,6 +41,8 @@ async function handleAuthComplete(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    console.log('Provider extracted:', provider);
 
     interface UserData {
       id: string;
@@ -207,6 +213,8 @@ async function handleAuthComplete(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Auth complete error:', error);
+    console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
     return NextResponse.json(
       { error: 'Authentication failed' },
       { status: 500 }

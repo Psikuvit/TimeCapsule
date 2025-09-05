@@ -78,7 +78,14 @@ export const userService = {
     const users = db.collection<DbUser>('users');
 
     const now = new Date();
-    const existing = await users.findOne({ provider: oauthData.provider, providerId: oauthData.providerId });
+    
+    // First check if user exists with this provider and providerId
+    let existing = await users.findOne({ provider: oauthData.provider, providerId: oauthData.providerId });
+    
+    // If not found by provider, check if user exists with this email
+    if (!existing) {
+      existing = await users.findOne({ email: oauthData.email });
+    }
 
     if (existing) {
       const update = {
@@ -86,6 +93,8 @@ export const userService = {
           email: oauthData.email,
           name: oauthData.name,
           picture: oauthData.picture ?? null,
+          provider: oauthData.provider,
+          providerId: oauthData.providerId,
           accessToken: oauthData.accessToken ?? null,
           refreshToken: oauthData.refreshToken ?? null,
           updatedAt: now,

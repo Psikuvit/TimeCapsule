@@ -64,7 +64,7 @@ async function getOAuthConfig() {
     const response = await fetch('/api/auth/config');
     if (response.ok) {
       const data = await response.json();
-      OAUTH_CONFIG = data.oauthConfig;
+      OAUTH_CONFIG = data; 
       return OAUTH_CONFIG;
     } else {
       throw new Error('Failed to fetch OAuth configuration');
@@ -177,10 +177,18 @@ export const handleOAuthCallback = async (code: string, state: string, incomingP
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.json();
+      console.error('Auth complete API error:', errorData);
       throw new Error(errorData.error || 'Failed to exchange authorization code for token');
     }
 
-    const { user: dbUser } = await tokenResponse.json();
+    const responseData = await tokenResponse.json();
+    console.log('Auth complete response:', responseData);
+    
+    const { user: dbUser } = responseData;
+
+    if (!dbUser) {
+      throw new Error('No user data returned from authentication');
+    }
 
     // Create user object for frontend
     const user: User = {
@@ -200,7 +208,8 @@ export const handleOAuthCallback = async (code: string, state: string, incomingP
     return user;
   } catch (error) {
     console.error('OAuth callback error:', error);
-    throw new Error('Authentication failed. Please try again.');
+    // Re-throw the original error message instead of generic one
+    throw error instanceof Error ? error : new Error('Authentication failed. Please try again.');
   }
 };
 
