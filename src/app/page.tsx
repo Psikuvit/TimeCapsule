@@ -6,6 +6,7 @@ import CreateCapsule from '@/components/CreateCapsule';
 import CapsuleList from '@/components/CapsuleList';
 import LoginModal from '@/components/LoginModal';
 import UserProfile from '@/components/UserProfile';
+import Footer from '@/components/Footer';
 import { getMessageCount, isPaidUser } from '@/utils/capsule';
 
 export default function Home() {
@@ -222,6 +223,9 @@ export default function Home() {
           </p>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
       
       {/* Modals */}
       <LoginModal

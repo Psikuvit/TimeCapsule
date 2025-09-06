@@ -151,6 +151,9 @@ dist
 .cache/
 public
 
+# Next.js public folder should be tracked (override Gatsby rule)
+!public/
+
 # Storybook build outputs
 .out
 .storybook-out
