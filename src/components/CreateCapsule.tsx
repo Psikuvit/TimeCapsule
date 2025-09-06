@@ -92,9 +92,10 @@ export default function CreateCapsule({ onCapsuleCreated }: CreateCapsuleProps) 
 
     const selectedDate = new Date(unlockDate);
     const now = new Date();
+    const minRequiredDate = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
     
-    if (selectedDate <= now) {
-      alert('Please select a future date and time');
+    if (selectedDate <= minRequiredDate) {
+      alert('Please select a date and time at least 24 hours in the future');
       return;
     }
 
@@ -138,8 +139,8 @@ export default function CreateCapsule({ onCapsuleCreated }: CreateCapsuleProps) 
     setShowPaymentModal(false);
   };
 
-  // Get minimum date (current date + 1 minute)
-  const minDate = new Date(Date.now() + 60000).toISOString().slice(0, 16);
+  // Get minimum date (current date + 24 hours) to match API validation
+  const minDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 16);
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md mx-auto">
@@ -227,6 +228,9 @@ export default function CreateCapsule({ onCapsuleCreated }: CreateCapsuleProps) 
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
             required
           />
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Must be at least 24 hours in the future
+          </p>
         </div>
         
         <button

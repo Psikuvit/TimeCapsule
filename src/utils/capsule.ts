@@ -39,11 +39,19 @@ export async function createCapsule(message: string, unlockDate: string): Promis
     const response = await fetch('/api/capsules', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, unlockDate }),
+      body: JSON.stringify({ message, deliveryDate: unlockDate }),
     });
     
     if (!response.ok) {
       const error = await response.json();
+      console.error('API Error:', error);
+      
+      // Show more specific error messages from validation
+      if (error.details && Array.isArray(error.details)) {
+        const validationErrors = error.details.map((detail: any) => detail.message).join(', ');
+        throw new Error(`Validation failed: ${validationErrors}`);
+      }
+      
       throw new Error(error.error || 'Failed to create capsule');
     }
     
