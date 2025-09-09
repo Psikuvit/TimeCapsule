@@ -10,6 +10,7 @@ This comprehensive guide covers deploying TimeCapsule to production with enterpr
 - [ ] Configure production MongoDB Atlas connection with SSL/TLS
 - [ ] Set up production OAuth applications with correct redirect URIs
 - [ ] Configure Stripe live API keys and webhook endpoints
+- [ ] Set up Google Analytics 4 property and configure tracking
 - [ ] Verify all environment variables using the debug endpoint
 - [ ] Document all environment variables securely
 
@@ -57,6 +58,9 @@ STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key
 PRICE_ID=price_your_live_price_id
 STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
+
+# Google Analytics (Recommended for production)
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-T3Y3PT7SSZ
 
 # Optional Production Settings
 NEXTAUTH_URL=https://yourdomain.com
@@ -196,6 +200,7 @@ vercel env add GOOGLE_REDIRECT_URI
 vercel env add STRIPE_SECRET_KEY
 vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 vercel env add PRICE_ID
+vercel env add NEXT_PUBLIC_GA_MEASUREMENT_ID
 ```
 
 **Via Vercel Dashboard:**
@@ -260,6 +265,65 @@ X-XSS-Protection: 1; mode=block
 Referrer-Policy: strict-origin-when-cross-origin
 Permissions-Policy: camera=(), microphone=(), geolocation=()
 ```
+
+## 📊 Google Analytics & SEO Configuration
+
+### 1. Google Analytics 4 Setup
+**Step 1: Create GA4 Property**
+1. Go to [Google Analytics](https://analytics.google.com/)
+2. Create a new GA4 property for your production domain
+3. Set up data streams for your website
+4. Copy your Measurement ID (format: G-XXXXXXXXXX)
+
+**Step 2: Configure Environment Variable**
+```bash
+# Add to production environment variables
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-T3Y3PT7SSZ
+```
+
+**Step 3: Verify Implementation**
+- Google Analytics Real-Time reports should show activity
+- Use Google Analytics DebugView for detailed event tracking
+- Verify data collection complies with privacy policies
+
+### 2. SEO Infrastructure (Auto-Configured)
+**Sitemap Generation** (Automatic)
+- Available at: `https://yourdomain.com/sitemap.xml`
+- Includes all public pages and legal pages
+- Auto-updated when new pages are added
+
+**Robots.txt Configuration** (Automatic)
+- Available at: `https://yourdomain.com/robots.txt`
+- Allows search engine crawling
+- References sitemap location
+
+**Structured Data Implementation**
+- JSON-LD format for enhanced search results
+- Organization schema with contact information
+- WebSite schema with navigation elements
+
+### 3. Legal Compliance & SEO Pages
+**Terms of Service** (`/terms`)
+- Comprehensive legal terms and user obligations
+- SEO-optimized with proper metadata
+- Accessible from footer navigation
+
+**Privacy Policy** (`/privacy`)
+- GDPR-compliant privacy documentation
+- Data collection and processing details
+- User rights and contact information
+
+**Contact & Support** (`/contact`)
+- Professional support page with FAQ
+- Support email: nacer.msi1@gmail.com
+- 24-48 hour response time commitment
+
+### 4. SEO Best Practices Implementation
+- **Meta Tags**: Comprehensive Open Graph and Twitter Card metadata
+- **Performance**: Optimized loading times and Core Web Vitals
+- **Mobile**: Responsive design with mobile-first approach
+- **Security**: HTTPS enforcement with proper security headers
+- **Accessibility**: Semantic HTML and proper ARIA labels
 
 ## 📊 Monitoring & Logging Strategy
 

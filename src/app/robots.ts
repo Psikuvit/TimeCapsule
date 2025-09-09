@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/', '/auth/'],
     },
-    sitemap: 'https://time-capsule-xi.vercel.app/sitemap.xml',
+    sitemap: 'https://www.timecapsules.me/sitemap.xml',
   }
 }

@@ -1,6 +1,6 @@
 # 🕰️ TimeCapsule
 
-A secure, production-ready Next.js application that allows users to create time capsules with messages that are unlocked at future dates. Built with enterprise-grade security features, OAuth authentication, and Stripe payments for premium functionality.
+A secure, production-ready Next.js application that allows users to create time capsules with messages that are unlocked at future dates. Built with enterprise-grade security features, OAuth authentication, Stripe payments, and comprehensive SEO optimization.
 
 ## ✨ Features
 
@@ -12,6 +12,9 @@ A secure, production-ready Next.js application that allows users to create time 
 - **🚀 Production Ready**: Security headers, middleware, validation, comprehensive error handling
 - **⏰ Time Capsule Logic**: Messages remain locked until their specified unlock date
 - **🎯 User Experience**: Real-time updates, tab-based interface, payment integration
+- **📄 Legal Compliance**: Complete Terms of Service, Privacy Policy, and Contact pages
+- **🔍 SEO Optimized**: Comprehensive metadata, sitemap, robots.txt, and Google Analytics
+- **📊 Analytics**: Integrated Google Analytics for tracking and insights
 
 ## 🏗️ Architecture
 
@@ -21,6 +24,8 @@ A secure, production-ready Next.js application that allows users to create time 
 - **Authentication**: JWT tokens (15-min expiry) with HttpOnly, Secure cookies
 - **Security**: Middleware with security headers, rate limiting, input validation, XSS protection
 - **Payments**: Stripe Payment Intents with environment validation
+- **SEO**: Sitemap generation, robots.txt, structured data, Open Graph tags
+- **Analytics**: Google Analytics 4 integration with gtag.js
 - **Development**: ESLint, TypeScript strict mode, environment validation utilities
 
 ## 🎯 Core Functionality
@@ -38,6 +43,12 @@ A secure, production-ready Next.js application that allows users to create time 
 - **Authentication**: OAuth providers with JWT token management
 - **Authorization**: User ownership validation on all operations
 
+### Legal & Compliance
+- **Terms of Service**: Comprehensive legal terms and conditions
+- **Privacy Policy**: Detailed data protection and privacy information
+- **Contact Support**: Professional support page with FAQ
+- **Support Email**: nacer.msi1@gmail.com for technical support
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -46,6 +57,7 @@ A secure, production-ready Next.js application that allows users to create time 
 - MongoDB (local or Atlas)
 - OAuth apps (Google, GitHub)
 - Stripe account (for premium features)
+- Google Analytics account (optional)
 
 ### Installation
 
@@ -88,6 +100,9 @@ A secure, production-ready Next.js application that allows users to create time 
    STRIPE_SECRET_KEY=sk_test_...
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
    PRICE_ID=price_your_stripe_price_id
+   
+   # Google Analytics (Optional - for tracking)
+   NEXT_PUBLIC_GA_MEASUREMENT_ID=G-T3Y3PT7SSZ
    ```
 
 5. **Start MongoDB** (if using local instance)
@@ -136,6 +151,7 @@ A secure, production-ready Next.js application that allows users to create time 
 ## 📁 Project Structure
 
 ```
+```
 timecapsule/
 ├── src/
 │   ├── app/                    # Next.js App Router
@@ -143,26 +159,31 @@ timecapsule/
 │   │   │   ├── auth/          # Authentication routes
 │   │   │   ├── capsules/      # Time capsule CRUD
 │   │   │   ├── create-payment-intent/ # Stripe payment
-│   │   │   ├── debug/         # Development debugging
 │   │   │   ├── session/       # Session management
 │   │   │   ├── stripe/        # Stripe configuration
 │   │   │   └── users/         # User management
 │   │   ├── auth/              # OAuth callback pages
-│   │   ├── debug/             # Environment debugging page
+│   │   ├── contact/           # Contact & Support page
+│   │   ├── privacy/           # Privacy Policy page
+│   │   ├── terms/             # Terms of Service page
 │   │   ├── payment-success/   # Payment completion page
 │   │   ├── globals.css        # Global styles
-│   │   ├── layout.tsx         # Root layout with AuthProvider
-│   │   └── page.tsx           # Main application page
+│   │   ├── layout.tsx         # Root layout with AuthProvider & SEO
+│   │   ├── page.tsx           # Main application page
+│   │   ├── sitemap.ts         # Auto-generated sitemap
+│   │   └── robots.ts          # Search engine instructions
 │   ├── components/            # React components
 │   │   ├── CapsuleList.tsx    # Display user's capsules
 │   │   ├── CreateCapsule.tsx  # Capsule creation form
+│   │   ├── Footer.tsx         # Site footer with legal links
+│   │   ├── JsonLd.tsx         # Structured data for SEO
 │   │   ├── LoginModal.tsx     # OAuth authentication modal
 │   │   ├── PaymentModal.tsx   # Stripe payment integration
 │   │   └── UserProfile.tsx    # User profile management
 │   ├── contexts/              # React contexts
 │   │   └── AuthContext.tsx    # Authentication state management
 │   ├── lib/                   # Core utilities
-│   │   ├── auth.ts           # Authentication utilities
+│   │   ├── auth.ts           # Authentication utilities```
 │   │   ├── database.ts       # MongoDB connection and services
 │   │   ├── env-validation.ts # Environment variable validation
 │   │   ├── jwt.ts            # JWT token management
@@ -211,8 +232,23 @@ timecapsule/
 - `POST /api/create-payment-intent` - Create Stripe payment intent
 - `GET /api/stripe/config` - Get Stripe configuration status
 
-### Debug & Development
-- `GET /api/debug/env` - Environment variable validation (development only)
+### SEO & Metadata
+- `GET /sitemap.xml` - Auto-generated sitemap for search engines
+- `GET /robots.txt` - Search engine crawling instructions
+
+## 📄 Legal & Compliance Pages
+
+### Public Pages
+- `/` - Main application (authentication required)
+- `/terms` - Terms of Service and usage conditions
+- `/privacy` - Privacy Policy and data protection information
+- `/contact` - Contact & Support page with FAQ
+- `/auth/callback` - OAuth callback handler
+
+### Contact & Support
+- **Email**: nacer.msi1@gmail.com
+- **Response Time**: 24-48 hours (priority for premium users)
+- **Support Coverage**: Technical issues, feature requests, account questions
 
 ## 🗄️ Database Schema
 
@@ -297,6 +333,9 @@ GOOGLE_REDIRECT_URI=https://yourdomain.com/auth/callback
 STRIPE_SECRET_KEY=sk_live_your_stripe_secret_key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_your_stripe_publishable_key
 PRICE_ID=price_your_live_price_id
+
+# Google Analytics
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-T3Y3PT7SSZ
 ```
 
 ### Pre-Deployment Checklist

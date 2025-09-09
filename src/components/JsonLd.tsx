@@ -4,7 +4,7 @@ export default function JsonLd() {
     "@type": "WebApplication",
     "name": "TimeCapsule",
     "description": "Create and schedule time capsule messages to your future self. Capture moments, set goals, and reflect on your journey over time.",
-    "url": "https://time-capsule-xi.vercel.app",
+    "url": "https://www.timecapsules.me/",
     "applicationCategory": "Productivity",
     "operatingSystem": "Web Browser",
     "offers": [
