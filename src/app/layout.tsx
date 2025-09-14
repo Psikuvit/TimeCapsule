@@ -33,14 +33,14 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
-  metadataBase: new URL('https://time-capsule-xi.vercel.app'),
+  metadataBase: new URL('https://www.timecapsules.me/'),
   alternates: {
     canonical: '/',
   },
   openGraph: {
     title: 'TimeCapsule - Send Messages to Your Future Self',
     description: 'Create and schedule time capsule messages to your future self. Capture moments, set goals, and reflect on your journey.',
-    url: 'https://time-capsule-xi.vercel.app',
+    url: 'https://www.timecapsules.me/',
     siteName: 'TimeCapsule',
     images: [
       {

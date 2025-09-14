@@ -32,10 +32,6 @@ export default function Home() {
 
   // Listen for capsule deletion events
   useEffect(() => {
-    const handleCapsuleDeleted = async () => {
-      const count = await getMessageCount();
-      setMessageCount(count);
-    };
 
     window.addEventListener('capsuleDeleted', handleCapsuleDeleted);
     

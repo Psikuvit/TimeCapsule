@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, AuthState, login, logout, refreshUser, updateUserProfile, OAuthProvider } from '@/lib/auth';
-import { useMemo } from 'react';
 
 interface AuthContextType extends AuthState {
   login: (provider: OAuthProvider) => Promise<void>;

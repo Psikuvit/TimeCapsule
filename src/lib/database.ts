@@ -121,6 +121,12 @@ export const userService = {
     await users.insertOne(user);
     return user;
   },
+  
+    // Admin: Get all users
+    async getAllUsers(): Promise<DbUser[]> {
+      const db = await getDatabase();
+      return await db.collection<DbUser>('users').find({}).sort({ createdAt: -1 }).toArray();
+    },
 
   // Get user by ID
   async getUserById(id: string): Promise<DbUser | null> {
